@@ -1,0 +1,13 @@
+# Credentials / local configuration
+config/database.php
+
+# Generated database files
+*.sqlite
+*.sqlite3
+database.sqlite
+
+# OS / editor files
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
