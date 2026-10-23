@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types= 1);
+
+function alias_exists(PDO $pdo, string $alias): bool
+{
+    $stmt = $pdo->prepare('SELECT 1 FROM links WHERE short_code = :code LIMIT 1');
+    $stmt->execute([':code' => $alias]);
+
+    return $stmt->fetch() !== false;
+}
+
+function save_link(PDO $pdo, string $originalUrl, ?string $shortCode = null): int {
+    $shortCode ??= 'pending_' . bin2hex(random_bytes(4));
+
+    $stmt = $pdo->prepare(
+        'INSERT INTO links (original_url, short_code) VALUES (:url, :code)'
+    );
+    $stmt->execute([':url' => $originalUrl, ':code' => $shortCode]);
+
+    return (int) $pdo->lastInsertId();
+}
