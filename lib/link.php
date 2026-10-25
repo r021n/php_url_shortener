@@ -17,6 +17,17 @@ function increment_clicks(PDO $pdo, string $code): void
     $stmt->execute([':code' => $code]);
 }
 
+function get_all_links(PDO $pdo): array {
+    $stmt = $pdo->query(
+        'SELECT id, original_url, short_code, clicks, created_at
+        FROM links
+        ORDER BY created_at DESC, id DESC
+        '
+    );
+
+    RETURN $stmt->fetchAll();
+}
+
 function alias_exists(PDO $pdo, string $alias): bool
 {
     return find_link_by_code($pdo, $alias) !== null;

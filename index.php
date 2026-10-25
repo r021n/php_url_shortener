@@ -16,11 +16,11 @@ $pdo = db();
 
 $kode = is_string($_GET['c'] ?? null) ? trim($_GET['c']) : '';
 
-if($kode !== '') {
+if ($kode !== '') {
     $link = find_link_by_code($pdo, $kode);
     $tujuan = $link === null ? '' : (string) $link['original_url'];
 
-    if(validate_url($tujuan) !== null) {
+    if (validate_url($tujuan) !== null) {
         show_not_found();
     }
 
@@ -33,6 +33,7 @@ $pesanSukses = '';
 $shortUrl = '';
 $urlInput = '';
 $aliasInput = '';
+$baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost:8000');
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $urlInput = is_string($_POST['url'] ?? null) ? trim($_POST['url']) : '';
@@ -80,7 +81,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
 
         if ($errors === [] && isset($shortCode)) {
-            $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost:8000');
             $shortUrl = $baseUrl . '/?c=' . $shortCode;
             $pesanSukses = 'URL berhasil disimpan ke database';
             $urlInput = '';
@@ -88,6 +88,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
     }
 }
+
+$links = get_all_links($pdo);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -122,7 +124,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 <p class="font-semibold text-green-800"><?php echo e($pesanSukses) ?></p>
                 <?php if ($shortUrl !== ''): ?>
                     <p class="mt-2">
-                        <a href="<?php echo e($shortUrl); ?>" class="font-mono text-sky-600 underline"><?php echo ($shortUrl); ?></a>
+                        <a href="<?php echo e($shortUrl); ?>" class="font-mono text-sky-600 underline"><?php echo e($shortUrl); ?></a>
                     </p>
                 <?php endif; ?>
             </div>
@@ -138,6 +140,45 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
             <button type="submit" class="mt-6 rounded-md bg-sky-600 px-4 py-2 font-semibold text-white hover:bg-sky-700">Simpan URL</button>
         </form>
+
+        <section class="mt-8">
+            <h2 class="text-xl font-bold text-slate-800">Riwayat Link</h2>
+            <p class="mt-1 text-sm text-slate-500">Semua link yang pernah dibuat, yang terbaru di atas.</p>
+
+            <div class="mt-4 overflow-x-auto rounded-lg bg-white shadow-md">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-4 py-3 font-semibold text-slate-700">URL Asli</th>
+                            <th class="px-4 py-3 font-semibold text-slate-700">Short Link</th>
+                            <th class="px-4 py-3 font-semibold text-slate-700">Waktu Pembuatan</th>
+                            <th class="px-4 py-3 font-semibold text-slate-700">Klik</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <?php if ($links === []): ?>
+                            <tr>
+                                <td colspan="4" class="px-4 py-6 text-center text-slate-500">Belum ada link.</td>
+                            </tr>
+                        <?php endif; ?>
+
+                        <?php foreach ($links as $link): ?>
+                            <?php $shortUrl = $baseUrl . '/?c=' . $link['short_code']; ?>
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-3 text-slate-700 break-all">
+                                    <?php echo e((string) $link['original_url']); ?>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <a href="<?php echo e($shortUrl); ?>" class="font-mono text-sky-600 underline break-all"><?php echo e($shortUrl); ?></a>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-600"><?php echo e((string) $link['created_at']); ?></td>
+                                <td><?php echo (int) $link['clicks']; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </main>
 </body>
 
