@@ -5,6 +5,7 @@ declare(strict_types=1);
 require __DIR__ . '/config/database.php';
 require __DIR__ . '/lib/validation.php';
 require __DIR__ . '/lib/link.php';
+require __DIR__ . '/lib/redirect.php';
 
 function e(string $value): string
 {
@@ -12,6 +13,20 @@ function e(string $value): string
 }
 
 $pdo = db();
+
+$kode = is_string($_GET['c'] ?? null) ? trim($_GET['c']) : '';
+
+if($kode !== '') {
+    $link = find_link_by_code($pdo, $kode);
+    $tujuan = $link === null ? '' : (string) $link['original_url'];
+
+    if(validate_url($tujuan) !== null) {
+        show_not_found();
+    }
+
+    increment_clicks($pdo, $kode);
+    redirect_to($tujuan);
+}
 
 $errors = [];
 $pesanSukses = '';

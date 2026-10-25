@@ -2,12 +2,24 @@
 
 declare(strict_types=1);
 
+function find_link_by_code(PDO $pdo, string $code): ?array
+{
+    $stmt = $pdo->prepare('SELECT id, original_url, short_code, clicks FROM links WHERE short_code = :code LIMIT 1');
+    $stmt->execute([':code' => $code]);
+    $row = $stmt->fetch();
+
+    return $row === false ? null : $row;
+}
+
+function increment_clicks(PDO $pdo, string $code): void
+{
+    $stmt = $pdo->prepare('UPDATE links SET clicks = clicks + 1 WHERE short_code = :code');
+    $stmt->execute([':code' => $code]);
+}
+
 function alias_exists(PDO $pdo, string $alias): bool
 {
-    $stmt = $pdo->prepare('SELECT 1 FROM links WHERE short_code = :code LIMIT 1');
-    $stmt->execute([':code' => $alias]);
-
-    return $stmt->fetch() !== false;
+    return find_link_by_code($pdo, $alias) !== null;
 }
 
 function generate_short_code(PDO $pdo, int $maxAttempts = 10): string
