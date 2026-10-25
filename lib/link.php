@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types= 1);
+declare(strict_types=1);
 
 function alias_exists(PDO $pdo, string $alias): bool
 {
@@ -10,7 +10,20 @@ function alias_exists(PDO $pdo, string $alias): bool
     return $stmt->fetch() !== false;
 }
 
-function save_link(PDO $pdo, string $originalUrl, ?string $shortCode = null): int {
+function generate_short_code(PDO $pdo, int $maxAttempts = 10): string
+{
+    for ($i = 0; $i < $maxAttempts; $i++) {
+        $code = bin2hex(random_bytes(3));
+        if (!alias_exists($pdo, $code)) {
+            return $code;
+        }
+    }
+
+    throw new RuntimeException('Gagal menghasilkan kode pendek unik. Coba lagi.');
+}
+
+function save_link(PDO $pdo, string $originalUrl, ?string $shortCode = null): int
+{
     $shortCode ??= 'pending_' . bin2hex(random_bytes(4));
 
     $stmt = $pdo->prepare(

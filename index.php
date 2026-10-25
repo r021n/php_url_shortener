@@ -15,6 +15,7 @@ $pdo = db();
 
 $errors = [];
 $pesanSukses = '';
+$shortUrl = '';
 $urlInput = '';
 $aliasInput = '';
 
@@ -35,11 +36,38 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     if ($errors === []) {
         $alias = sanitize_alias($aliasInput);
 
-        if ($alias !== '' && alias_exists($pdo, $alias)) {
-            $errors[] = 'Alias "' . $alias . '" sudah dipakai. Silakan pilih alias lain.';
+        if ($alias !== '') {
+            if (alias_exists($pdo, $alias)) {
+                $errors[] = 'Alias "' . $alias . '" sudah dipakai. Silakan pilih alias lain.';
+            } else {
+                try {
+                    save_link($pdo, $urlInput, $alias);
+                    $shortCode = $alias;
+                } catch (PDOException $e) {
+                    if (str_contains($e->getMessage(), 'UNIQUE constraint failed')) {
+                        $errors[] = 'Alias "' . $alias . '" sudah dipakai. Silakan pilih alias lain';
+                    } else {
+                        throw $e;
+                    }
+                }
+            }
         } else {
-            save_link($pdo, $urlInput, $alias !== '' ? $alias : null);
-            $pesanSukses = 'URL berhasil disimpan ke database.';
+            try {
+                $shortCode = generate_short_code($pdo);
+                save_link($pdo, $urlInput, $shortCode);
+            } catch (PDOException $e) {
+                if (str_contains($e->getMessage(), 'UNIQUE constraint failed')) {
+                    $errors[] = 'Terjadi tabrakan kode. Silakan soba lagi.';
+                } else {
+                    throw $e;
+                }
+            }
+        }
+
+        if ($errors === [] && isset($shortCode)) {
+            $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost:8000');
+            $shortUrl = $baseUrl . '/?c=' . $shortCode;
+            $pesanSukses = 'URL berhasil disimpan ke database';
             $urlInput = '';
             $aliasInput = '';
         }
@@ -77,6 +105,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         <?php if ($pesanSukses !== ''): ?>
             <div class="mt-6 rounded-lg border border-green-300 bg-screen-50 p-4">
                 <p class="font-semibold text-green-800"><?php echo e($pesanSukses) ?></p>
+                <?php if ($shortUrl !== ''): ?>
+                    <p class="mt-2">
+                        <a href="<?php echo e($shortUrl); ?>" class="font-mono text-sky-600 underline"><?php echo ($shortUrl); ?></a>
+                    </p>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 
