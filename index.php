@@ -153,12 +153,13 @@ $links = get_all_links($pdo);
                             <th class="px-4 py-3 font-semibold text-slate-700">Short Link</th>
                             <th class="px-4 py-3 font-semibold text-slate-700">Waktu Pembuatan</th>
                             <th class="px-4 py-3 font-semibold text-slate-700">Klik</th>
+                            <th class="px-4 py-3 font-semibold text-slate-700">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200">
                         <?php if ($links === []): ?>
                             <tr>
-                                <td colspan="4" class="px-4 py-6 text-center text-slate-500">Belum ada link.</td>
+                                <td colspan="5" class="px-4 py-6 text-center text-slate-500">Belum ada link.</td>
                             </tr>
                         <?php endif; ?>
 
@@ -172,7 +173,13 @@ $links = get_all_links($pdo);
                                     <a href="<?php echo e($shortUrl); ?>" class="font-mono text-sky-600 underline break-all"><?php echo e($shortUrl); ?></a>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-slate-600"><?php echo e((string) $link['created_at']); ?></td>
-                                <td><?php echo (int) $link['clicks']; ?></td>
+                                <td class="px-4 py-3"><?php echo (int) $link['clicks']; ?></td>
+                                <td class="px-4 py-3 text-right">
+                                    <form action="hapus.php" method="post" onsubmit="return confirm('Hapus link ini? Tindakan ini tidak bisa dibatalkan.');">
+                                        <input type="hidden" name="id" value="<?php echo (int) $link['id']; ?>">
+                                        <button type="submit" class="rounded-md bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700">Hapus</button>
+                                    </form>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

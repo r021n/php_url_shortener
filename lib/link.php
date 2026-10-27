@@ -17,7 +17,8 @@ function increment_clicks(PDO $pdo, string $code): void
     $stmt->execute([':code' => $code]);
 }
 
-function get_all_links(PDO $pdo): array {
+function get_all_links(PDO $pdo): array
+{
     $stmt = $pdo->query(
         'SELECT id, original_url, short_code, clicks, created_at
         FROM links
@@ -25,7 +26,7 @@ function get_all_links(PDO $pdo): array {
         '
     );
 
-    RETURN $stmt->fetchAll();
+    return $stmt->fetchAll();
 }
 
 function alias_exists(PDO $pdo, string $alias): bool
@@ -55,4 +56,12 @@ function save_link(PDO $pdo, string $originalUrl, ?string $shortCode = null): in
     $stmt->execute([':url' => $originalUrl, ':code' => $shortCode]);
 
     return (int) $pdo->lastInsertId();
+}
+
+function delete_link(PDO $pdo, int $id): bool
+{
+    $stmt = $pdo->prepare('DELETE FROM links WHERE id = :id');
+    $stmt->execute([':id' => $id]);
+
+    return $stmt->rowCount() > 0;
 }
